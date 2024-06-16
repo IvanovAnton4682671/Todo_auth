@@ -9,8 +9,87 @@
     width: 900px;
     height: 130px;
     border-radius: 35px;
-    border: 1px solid #5B5B5B;
+    border: 2px solid #5B5B5B;
     padding: 20px;
     font-size: 24px;
     overflow: hidden;
+    outline: none;
+    margin-bottom: 40px;
+
+    &:hover {
+        animation: blockHover 0.2s forwards;
+    }
+
+    &:not(hover) {
+        animation: blockNotHover 0.2s forwards;
+    }
+}
+
+@keyframes blockHover {
+    0% {
+        box-shadow: none;
+        transform: translateY(0px);
+    }
+    100% {
+        box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.2);
+        transform: translateY(-5px);
+    }
+}
+
+@keyframes blockNotHover {
+    0% {
+        box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.2);
+        transform: translateY(-5px);
+    }
+    100% {
+        box-shadow: none;
+        transform: translateY(0px);
+    }
+}
+
+.notActiveTextArea {
+    display: flex;
+    align-items: center;
+}
+
+.buttonCheck {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: 2px solid #5B5B5B;
+    background-color: #ffffff;
+    margin-right: 20px;
+
+    img {
+        width: 25px;
+        height: 25px;
+    }
+}
+
+.buttonActivity {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: 2px solid #5B5B5B;
+    background-color: #ffffff;
+    margin-left: 20px;
+
+    img {
+        width: 25px;
+        height: 25px;
+    }
+}
+
+.activeTextArea {
+    display: flex;
+    align-items: center;
+
+    div {
+        display: flex;
+        flex-direction: column;
+
+        button {
+            margin-bottom: 20px;
+        }
+    }
 }
