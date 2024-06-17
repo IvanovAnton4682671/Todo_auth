@@ -20,4 +20,17 @@
 .body {
     display: flex;
     flex-direction: column;
+    align-items: center;
+}
+
+.buttonAdd {
+    width: 75px;
+    height: 75px;
+    border-radius: 38px;
+    border: 2px solid #5B5B5B;
+    background-color: #ffffff;
+    font-size: 60px;
+    font-weight: 150;
+    line-height: 1.0;
+    margin-bottom: 40px;
 }

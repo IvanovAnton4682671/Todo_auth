@@ -8,11 +8,12 @@
     resize: none;
     width: 900px;
     height: 130px;
+    max-height: 600px;
     border-radius: 35px;
     border: 2px solid #5B5B5B;
     padding: 20px;
     font-size: 24px;
-    overflow: hidden;
+    overflow: auto;
     outline: none;
     margin-bottom: 40px;
 
@@ -23,6 +24,14 @@
     &:not(hover) {
         animation: blockNotHover 0.2s forwards;
     }
+}
+
+.textareaChecked {
+    background-color: #44cc88;
+}
+
+.textareaUnchecked {
+    background-color: #ffffff;
 }
 
 @keyframes blockHover {

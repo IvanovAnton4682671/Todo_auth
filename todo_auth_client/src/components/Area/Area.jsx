@@ -6,7 +6,7 @@ import checkSvg from "../../img/check.svg"
 import penSvg from "../../img/pen.svg"
 import trashSvg from "../../img/trash.svg"
 
-function Area() {
+function Area({id, onDelete}) {
 
     //состояние, которео следит за активностью textarea (если активна - разворачиваем, показываем дополнительные кнопки,
     //иначе - сворачиваем и скрываем)
@@ -40,29 +40,55 @@ function Area() {
         }
     }, [isTouched])
 
+    //ещё один useEffect
+    //этот товарищ адаптивно изменяет высоту textarea в зависимости от текста в ней
+    React.useEffect(() => {
+        if (textareaRef.current) {
+            const textarea = textareaRef.current //передаём текущую textarea
+            const adjustHeight = () => { //функция пересчёта высоты
+                textarea.style.height = "90px" //хз почему, но если указать 130px то при активной textarea она будет выше чем 130px
+                textarea.style.height = `${Math.min(textarea.scrollHeight, 600)}px`
+            }
+
+            if (isActive) { //если активна - пересчитываем высоту в реалтайме при вводе
+                adjustHeight()
+                textarea.addEventListener("input", adjustHeight)
+            }
+            else { //иначе сбрасываем до заводских настроек
+                textarea.style.height = "130px"
+                textarea.removeEventListener("input", adjustHeight)
+            }
+
+            return () => { //а тут чтоб уж точно, ещё раз сбрасываем до стандартных
+                textarea.style.height = "130px"
+                textarea.removeEventListener("input", adjustHeight)
+            }
+        }
+    }, [isActive])
+
     return(
         <div className={styles.bodyTextArea}>
             {!isActive ? (
                     <div className={styles.notActiveTextArea}>
                         <button className={styles.buttonCheck} onClick={onClickButtonCheck}>
-                            <img src={!isChecked ? nothing : checkSvg}/>
+                            <img src={!isChecked ? nothing : checkSvg} alt="check"/>
                         </button>
-                        <textarea className={styles.textarea} onClick={onClickTextArea} readOnly="true">
+                        <textarea className={`${styles.textarea} ${isChecked ? styles.textareaChecked : styles.textareaUnchecked}`} onClick={onClickTextArea} readOnly="true">
                         </textarea>
                     </div>
                 ) : (
                     <div className={styles.activeTextArea}>
                         <button className={styles.buttonCheck} onClick={onClickButtonCheck}>
-                            <img src={!isChecked ? nothing : checkSvg}/>
+                            <img src={!isChecked ? nothing : checkSvg} alt="check"/>
                         </button>
-                        <textarea className={styles.textarea} onClick={onClickTextArea} readOnly={!isTouched} ref={textareaRef}>
+                        <textarea className={`${styles.textarea} ${isChecked ? styles.textareaChecked : styles.textareaUnchecked}`} onClick={onClickTextArea} readOnly={!isTouched} ref={textareaRef}>
                         </textarea>
                         <div>
                             <button className={styles.buttonActivity} onClick={onClickButtonPen}>
-                                <img src={!isTouched ? penSvg : checkSvg}/>
+                                <img src={!isTouched ? penSvg : checkSvg} alt="pen"/>
                             </button>
-                            <button className={styles.buttonActivity}>
-                                <img src={trashSvg}/>
+                            <button className={styles.buttonActivity} onClick={() => onDelete(id)}>
+                                <img src={trashSvg} alt="trash"/>
                             </button>
                         </div>
                     </div>
