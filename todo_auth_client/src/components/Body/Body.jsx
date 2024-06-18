@@ -5,7 +5,7 @@ import Area from "../Area/Area"
 
 function Body() {
 
-    //временный костыль для проверки возможности удаления компонентов
+    //состояние, которое отображает общее количество Area
     const [areas, setAreas] = React.useState([])
 
     //счётчки задач (в React такая магия работает, потому что переменная будет пересчитываться при каждом рендеринге компонента,
@@ -29,6 +29,9 @@ function Body() {
                 <p>Задачи: {quantityAreas}</p>
             </div>
             <div className={styles.body}>
+                <button className={styles.buttonSave}>
+                    Сохранить
+                </button>
                 {areas.map((area) => (
                     <Area key={area.id} id={area.id} onDelete={deleteArea}></Area>
                 ))}
