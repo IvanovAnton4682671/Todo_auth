@@ -1,0 +1,78 @@
+Создаём среду:
+python3 -m venv todo_auth_server
+
+Активируем среду:
+source todo_auth_server/bin/activate
+
+Устанавливаем пакет для Django REST Framework:
+pip install djangorestframework
+
+Устанавливаем пакет для PostgreSQL:
+pip install psycopg2-binary
+
+Устанавливаем пакет для CORS-заголовков:
+pip install django-cors-headers
+
+Создаём проект:
+django-admin startproject Todo_Auth
+
+Создаём в этом проекте основное приложение:
+python manage.py startapp core
+
+Начало блока - изменения в файле settings.py
+----------------------------------------------------------------------------------------------------
+Настраиваем подключение к БД:
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql', #используемая СУБД
+        'NAME': 'todo_auth', #название БД
+        'USER': 'anton', #имя пользователя-владельца
+        'PASSWORD': '4682671', #пароль пользователя-владельца
+        'HOST': 'localhost', #IP-адрес сервера
+        'PORT': '5432', #порт сервера
+    }
+}
+
+Меняем язык и часовой пояс:
+LANGUAGE_CODE = 'ru-ru'
+
+TIME_ZONE = 'Europe/Moscow'
+
+Добавляем приложение и CORS-заголовки в INSTALLED_APPS:
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'core',
+    'corsheaders',
+]
+
+Добавляем CORS-заголовки в MIDDLEWARE (обязательно перед CommonMiddleware):
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+Разрешаем CORS-заголовкам определённый URL (наше клиентское приложение):
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3000',
+]
+
+Добавляем настройки для отправки сообщений на почту:
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' #бэкэнд для отправки почты
+EMAIL_HOST = 'smtp.Mail.ru' #SMTP сервер для отправки почты
+EMAIL_PORT = 587 #порт SMTP сервера
+EMAIL_HOST_USER = 'anton-ivanov-080203@mail.ru' #адрес электронной почты отправителя
+EMAIL_HOST_PASSWORD = 'ErLHamNW1FpfZkdzNkGw' #пароль от почтового ящика отправителя
+EMAIL_USE_TLS = True #используем TLS для безопасной передачи данных
+----------------------------------------------------------------------------------------------------
+Конец блока - изменения в файле settings.py
