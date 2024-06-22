@@ -56,6 +56,12 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
 ]
 
+CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:3000',
+]
+
 ROOT_URLCONF = 'Todo_Auth.urls'
 
 TEMPLATES = [

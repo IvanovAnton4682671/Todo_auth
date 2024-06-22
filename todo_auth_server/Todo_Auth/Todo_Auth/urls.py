@@ -16,7 +16,21 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.http import JsonResponse
+from core.views import *
+
+@ensure_csrf_cookie
+def get_csrf_cookie(request):
+    """
+    Данная функция устанавливает CSRF-токен в cookie.
+    """
+    return JsonResponse({"message": "CSRF cookie set!"})
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('get_csrf_cookie', get_csrf_cookie, name='get_csrf_cookie'),
+    path('authorization', handle_authorization, name='handle_authorization'),
+    path('send_code', handle_send_code, name='handle_send_code'),
+    path('input_code', handle_input_code, name='handle_input_code'),
 ]
