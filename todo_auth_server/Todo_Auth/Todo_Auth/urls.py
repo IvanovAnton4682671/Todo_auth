@@ -19,17 +19,27 @@ from django.urls import path
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.http import JsonResponse
 from core.views import *
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
 
 @ensure_csrf_cookie
 def get_csrf_cookie(request):
     """
     Данная функция устанавливает CSRF-токен в cookie.
+
+    Args:
+        request (Dict): Входящий запрос, в который встраивается CSRF-токен, который потом сервер будет ожидать при получении запросов.
+    Return:
+        dict (JsonResponse): Словарь, состоящий из сообщения (message) и статуса (status).
     """
-    return JsonResponse({"message": "CSRF cookie set!"})
+    return JsonResponse({"message": "CSRF cookie set!"}, status=200)
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('get_csrf_cookie', get_csrf_cookie, name='get_csrf_cookie'),
+    path('get_jwt_token', TokenObtainPairView.as_view(), name='get_jwt_token'),
+    path('get_refresh_token', TokenRefreshView.as_view(), name='get_refresh_token'),
     path('authorization', handle_authorization, name='handle_authorization'),
     path('send_code', handle_send_code, name='handle_send_code'),
     path('input_code', handle_input_code, name='handle_input_code'),

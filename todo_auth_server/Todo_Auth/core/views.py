@@ -1,6 +1,7 @@
 from django.views.decorators.csrf import csrf_protect
 import json
 from .models import *
+from rest_framework_simplejwt.tokens import RefreshToken
 from django.http import JsonResponse
 import random as rnd
 from django.core.mail import send_mail
@@ -20,10 +21,15 @@ def handle_authorization(request: dict) -> dict:
         data = json.loads(request.body)
         email = data.get("authorizationEmail")
         password = data.get("authorizationPassword")
-        user = User.objects.filter(user_email=email, user_password=password)
+        user = User.objects.filter(email=email, password=password).first()
         if user:
+            refresh = RefreshToken.for_user(user)  #выдача пары токенов авторизованному пользователю
             print("Данные авторизации успешно получены и обработаны, такой пользователь существует!")
-            return JsonResponse({"message": "Данные авторизации успешно получены и обработаны, такой пользователь существует!"}, status=200)
+            return JsonResponse({
+                "message": "Данные авторизации успешно получены и обработаны, такой пользователь существует!",
+                "access": str(refresh.access_token),
+                "refresh": str(refresh)
+            }, status=200)
         else:
             print("Данные авторизации успешно получены и обработаны, такой пользователь не существует!")
             return JsonResponse({"message": "Данные авторизации успешно получены и обработаны, такой пользователь не существует!"}, status=201)
@@ -46,7 +52,7 @@ def handle_send_code(request: dict) -> dict:
         data = json.loads(request.body)
         email = data.get("registrationEmail")
         password = data.get("registrationPassword")
-        user = User.objects.filter(user_email=email, user_password=password)
+        user = User.objects.filter(email=email).first()  #проверяем только по почте, потому что у разных пользователей может быть один пароль
         if not user:
             from_email = "anton-ivanov-080203@mail.ru"
             subject = "Код подтверждения"
@@ -69,6 +75,15 @@ def handle_send_code(request: dict) -> dict:
 
 @csrf_protect
 def handle_input_code(request: dict) -> dict:
+    """
+    Данная функция обрабатывает регистрацию пользователя. Она получает введённый код и почту с хэшем пароля, проверяет совпадение кодов и старых данных с новыми через сессию,
+    и сохраняет нового пользователя в бд, если такого пользователя ещё нет.
+
+    Args:
+        request (Dict): Входящий запрос со списком атрибутов, включая registrationEmail, RegistrationPassword и registrationCode.
+    Return:
+        dict (JsonResponse): Словарь, состоящий из сообщения (message) и статуса (status).
+    """
     if request.method == "POST":
         data = json.loads(request.body)
         email = data.get("registrationEmail")
@@ -77,9 +92,21 @@ def handle_input_code(request: dict) -> dict:
         saved_email = request.session.get("registrationEmail")
         saved_password = request.session.get("registrationPassword")
         saved_code = request.session.get("registrationCode")
-        if saved_code is not None and str(code) == str(saved_code) and email == saved_email and password == saved_password:
+        user = User.objects.filter(email=email).first()  #проверяем только по почте, потому что у разных пользователей может быть один пароль
+        if saved_code is not None and str(code) == str(saved_code) and email == saved_email and password == saved_password and not user:
+            user = User(
+                is_superuser=False,
+                email=email,
+                password=password
+            )
+            user.save()
+            refresh = RefreshToken.for_user(user)  # выдача пары токенов авторизованному пользователю
             print("Код был введён верно и никакие данные не изменились!")
-            return JsonResponse({"message": "Код был введён верно и никакие данные не изменились!"}, status=200)
+            return JsonResponse({
+                "message": "Код был введён верно и никакие данные не изменились!",
+                "access": str(refresh.access_token),
+                "refresh": str(refresh)
+            }, status=200)
         elif str(code) != str(saved_code):
             print("Код был введён неверно!")
             return JsonResponse({"message": "Код был введён неверно!"}, status=201)

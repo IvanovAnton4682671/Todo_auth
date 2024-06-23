@@ -7,6 +7,9 @@ source todo_auth_server/bin/activate
 Устанавливаем пакет для Django REST Framework:
 pip install djangorestframework
 
+Устанавливаем пакет для JWT-токенов:
+pip install djangorestframework-simplejwt
+
 Устанавливаем пакет для PostgreSQL:
 pip install psycopg2-binary
 
@@ -18,6 +21,8 @@ django-admin startproject Todo_Auth
 
 Создаём в этом проекте основное приложение:
 python manage.py startapp core
+
+
 
 Начало блока - изменения в файле settings.py
 ----------------------------------------------------------------------------------------------------
@@ -38,7 +43,7 @@ LANGUAGE_CODE = 'ru-ru'
 
 TIME_ZONE = 'Europe/Moscow'
 
-Добавляем приложение и CORS-заголовки в INSTALLED_APPS:
+Добавляем приложение, CORS-заголовки, REST Framework и JWT-токены в INSTALLED_APPS:
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -48,6 +53,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'core',
     'corsheaders',
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
 ]
 
 Добавляем CORS-заголовки в MIDDLEWARE (обязательно перед CommonMiddleware):
@@ -75,6 +83,25 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:3000',
 ]
 
+Настраиваем REST Framework и JWT-токены:
+REST_FRAMEWORK = {
+   'DEFAULT_AUTHENTICATION_CLASSES': (
+       'rest_framework_simplejwt.authentication.JWTAuthentication',
+   ),
+}
+
+SIMPLE_JWT = {
+   'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+   'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+   'ROTATE_REFRESH_TOKENS': True,
+   'BLACKLIST_AFTER_ROTATION': True,
+   'ALGORITHM': 'HS256',
+   'SIGNING_KEY': '4ea5c508a6566e76240543f8feb06fd457777be39549c4016436afda65d2330e',
+}
+
+Указание пользовательской модели:
+AUTH_USER_MODEL = 'core.User'
+
 Добавляем настройки для отправки сообщений на почту:
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' #бэкэнд для отправки почты
 EMAIL_HOST = 'smtp.Mail.ru' #SMTP сервер для отправки почты
@@ -85,16 +112,29 @@ EMAIL_USE_TLS = True #используем TLS для безопасной пе�
 ----------------------------------------------------------------------------------------------------
 Конец блока - изменения в файле settings.py
 
+
+
 Начало блока - изменения в файле urls.py
 ----------------------------------------------------------------------------------------------------
 Нужно добавить эндпоинт для получения CSRF-токена:
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.http import JsonResponse
+
 @ensure_csrf_cookie
 def get_csrf_cookie(request):
     return JsonResponse({"message": "CSRF cookie set!"})
 
-path('get_csrf_cookie', get_csrf_cookie, name='get_csrf-cookie'),
+path('get_csrf_cookie', get_csrf_cookie, name='get_csrf_cookie'),
+
+Нужно добавить маршруты для получения и обновления JWT-токена:
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
+path('get_jwt_token', TokenObtainPairView.as_view(), name='get_jwt_token'),
+path('get_refresh_token', TokenRefreshView.as_view(), name='get_refresh_token'),
 ----------------------------------------------------------------------------------------------------
 Конец блока - изменения в файле urls.py
+
+
 
 Начало блока - особенности с настройкой PostgreSQL
 ----------------------------------------------------------------------------------------------------

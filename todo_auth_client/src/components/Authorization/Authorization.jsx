@@ -1,6 +1,6 @@
 import React from 'react'
 import { SHA256 } from 'crypto-js'
-import axios from 'axios'
+import axiosInstance from '../../Interceptor/axiosInstance'
 
 import styles from './Authorization.module.css'
 
@@ -8,11 +8,9 @@ function Authorization({ onLogin }) {
 	//функция, которая получает CSRF-токен и устанавливает его в cookie
 	const fetchCsrfToken = async () => {
 		try {
-			await axios.get('http://localhost:8000/get_csrf_cookie', {
-				withCredentials: true,
-			})
+			await axiosInstance.get('/get_csrf_cookie')
 		} catch (error) {
-			console.error('Ошибка при получении CSRF-токена', error)
+			console.error('Ошибка при получении CSRF-токена: ', error)
 		}
 	}
 
@@ -20,22 +18,6 @@ function Authorization({ onLogin }) {
 	React.useEffect(() => {
 		fetchCsrfToken()
 	}, [])
-
-	//функция, которая получает CSRF-токен из cookie
-	function getCookie(name) {
-		let cookieValue = null
-		if (document.cookie && document.cookie !== '') {
-			const cookies = document.cookie.split(';')
-			for (let i = 0; i < cookies.length; i++) {
-				const cookie = cookies[i].trim()
-				if (cookie.substring(0, name.length + 1) === name + '=') {
-					cookieValue = decodeURIComponent(cookie.substring(name.length + 1))
-					break
-				}
-			}
-		}
-		return cookieValue
-	}
 
 	//состояние, которое следит за отображением формы (показывает нужную)
 	const [formChanged, setFormChanged] = React.useState(false)
@@ -85,35 +67,32 @@ function Authorization({ onLogin }) {
 		event.preventDefault()
 		const isFormValid = formAuthorizationValidate()
 		if (isFormValid) {
-			//получаем куки ИМЕННО С НАЗВАНИЕМ csrftoken, потому что такая куки создаётся автоматически на сервере
-			const csrfToken = getCookie('csrftoken')
+			//создаём копию структуры данных, но с хэшем пароля
+			const formDataWithHashedPassword = {
+				...formAuthorizationData,
+				authorizationPassword: SHA256(
+					formAuthorizationData.authorizationPassword
+				).toString(),
+			}
 
-			const hashPassword = SHA256(
-				formAuthorizationData.authorizationPassword
-			).toString()
-			setFormAuthorizationData(
-				(formAuthorizationData.authorizationPassword = hashPassword)
-			)
-
-			axios
-				.post('http://localhost:8000/authorization', formAuthorizationData, {
-					headers: {
-						'Content-Type': 'application/json',
-						'X-CSRFTOKEN': csrfToken,
-					},
-					withCredentials: true,
-				})
+			axiosInstance
+				.post('/authorization', formDataWithHashedPassword)
 				.then(response => {
-					console.log('Отправленные данные: ', formAuthorizationData)
+					console.log('Отправленные данные: ', formDataWithHashedPassword)
 					console.log('Ответ сервера: ', response.data)
 
 					if (response.status === 200) {
 						console.log('Получилось авторизоваться!')
 						alert('Вы успешно авторизовались!')
+
+						//сохранение токенов в localStorage
+						localStorage.setItem('accessToken', response.data.access)
+						localStorage.setItem('refreshToken', response.data.refresh)
+
 						onLogin()
 					} else if (response.status === 201) {
-						console.log('Такой пользователь уже существует!')
-						alert('Такой пользователь уже существует!')
+						console.log('Такой пользователь не существует!')
+						alert('Такой пользователь не существует!')
 					} else if (response.status === 400) {
 						console.log(
 							'Какого-то хрена отправился не POST-запрос при авторизации!'
@@ -123,7 +102,7 @@ function Authorization({ onLogin }) {
 				.catch(error => {
 					console.log(
 						'Ошибка при отправке: ',
-						formAuthorizationData,
+						formDataWithHashedPassword,
 						' на сервер: ',
 						error
 					)
@@ -179,9 +158,6 @@ function Authorization({ onLogin }) {
 		event.preventDefault()
 		const isFormValid = formRegistrationValidate()
 		if (isFormValid) {
-			//получаем куки ИМЕННО С НАЗВАНИЕМ csrftoken, потому что такая куки создаётся автоматически на сервере
-			const csrfToken = getCookie('csrftoken')
-
 			//создаём копию структуры данных, но с хэшем пароля
 			const formDataWithHashedPassword = {
 				...formRegistrationData,
@@ -190,14 +166,8 @@ function Authorization({ onLogin }) {
 				).toString(),
 			}
 
-			axios
-				.post('http://localhost:8000/send_code', formDataWithHashedPassword, {
-					headers: {
-						'Content-Type': 'application/json',
-						'X-CSRFTOKEN': csrfToken,
-					},
-					withCredentials: true,
-				})
+			axiosInstance
+				.post('/send_code', formDataWithHashedPassword)
 				.then(response => {
 					console.log('Отправленные данные: ', formDataWithHashedPassword)
 					console.log('Ответ сервера: ', response.data)
@@ -231,9 +201,9 @@ function Authorization({ onLogin }) {
 		}
 	}
 
+	//функция, которая выполняет запрос о регистрации на сервер
 	const handleSubmitRegistration = event => {
 		event.preventDefault()
-		const csrfToken = getCookie('csrftoken')
 
 		//создаём копию структуры данных, но с хэшем пароля
 		const formDataWithHashedPassword = {
@@ -243,14 +213,8 @@ function Authorization({ onLogin }) {
 			).toString(),
 		}
 
-		axios
-			.post('http://localhost:8000/input_code', formDataWithHashedPassword, {
-				headers: {
-					'Content-Type': 'application/json',
-					'X-CSRFTOKEN': csrfToken,
-				},
-				withCredentials: true,
-			})
+		axiosInstance
+			.post('/input_code', formDataWithHashedPassword)
 			.then(response => {
 				console.log('Отправленные данные: ', formDataWithHashedPassword)
 				console.log('Ответ сервера: ', response.data)
@@ -260,6 +224,11 @@ function Authorization({ onLogin }) {
 						'Код введён верно и никакие данные не изменились, успешная регистрация!'
 					)
 					alert('Вы успешно зарегистрировались!')
+
+					//сохранение токенов в localStorage
+					localStorage.setItem('accessToken', response.data.access)
+					localStorage.setItem('refreshToken', response.data.refresh)
+
 					onLogin()
 				} else if (response.status === 201) {
 					console.log('Код введён неверно!')
