@@ -23,7 +23,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 
 @ensure_csrf_cookie
-def get_csrf_cookie(request):
+def get_csrf_cookie(request: dict) -> JsonResponse:
     """
     Данная функция устанавливает CSRF-токен в cookie.
 
@@ -38,9 +38,11 @@ def get_csrf_cookie(request):
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('get_csrf_cookie', get_csrf_cookie, name='get_csrf_cookie'),
-    path('get_jwt_token', TokenObtainPairView.as_view(), name='get_jwt_token'),
+    #  path('get_jwt_token', TokenObtainPairView.as_view(), name='get_jwt_token'),
     path('get_refresh_token', TokenRefreshView.as_view(), name='get_refresh_token'),
     path('authorization', handle_authorization, name='handle_authorization'),
     path('send_code', handle_send_code, name='handle_send_code'),
     path('input_code', handle_input_code, name='handle_input_code'),
+    path('load_areas', handle_load_areas, name='handle_load_areas'),
+    path('save_areas', handle_save_areas, name='handle_save_areas'),
 ]

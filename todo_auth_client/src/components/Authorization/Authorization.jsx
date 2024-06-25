@@ -67,7 +67,7 @@ function Authorization({ onLogin }) {
 		event.preventDefault()
 		const isFormValid = formAuthorizationValidate()
 		if (isFormValid) {
-			//создаём копию структуры данных, но с хэшем пароля
+			//создаём копию структуры данных, но с хешем пароля
 			const formDataWithHashedPassword = {
 				...formAuthorizationData,
 				authorizationPassword: SHA256(
@@ -85,9 +85,13 @@ function Authorization({ onLogin }) {
 						console.log('Получилось авторизоваться!')
 						alert('Вы успешно авторизовались!')
 
-						//сохранение токенов в localStorage
+						//сохранение токенов и почты пользователя в localStorage
 						localStorage.setItem('accessToken', response.data.access)
 						localStorage.setItem('refreshToken', response.data.refresh)
+						localStorage.setItem(
+							'userEmail',
+							formDataWithHashedPassword.authorizationEmail
+						)
 
 						onLogin()
 					} else if (response.status === 201) {
@@ -158,7 +162,7 @@ function Authorization({ onLogin }) {
 		event.preventDefault()
 		const isFormValid = formRegistrationValidate()
 		if (isFormValid) {
-			//создаём копию структуры данных, но с хэшем пароля
+			//создаём копию структуры данных, но с хешем пароля
 			const formDataWithHashedPassword = {
 				...formRegistrationData,
 				registrationPassword: SHA256(
@@ -205,7 +209,7 @@ function Authorization({ onLogin }) {
 	const handleSubmitRegistration = event => {
 		event.preventDefault()
 
-		//создаём копию структуры данных, но с хэшем пароля
+		//создаём копию структуры данных, но с хешем пароля
 		const formDataWithHashedPassword = {
 			...formRegistrationData,
 			registrationPassword: SHA256(
@@ -233,11 +237,11 @@ function Authorization({ onLogin }) {
 				} else if (response.status === 201) {
 					console.log('Код введён неверно!')
 					alert('Вы ввели неверный код!')
-				} else if (response.status === 401) {
+				} else if (response.status === 499) {
 					console.log(
 						'Глобальный код отсутствует, что-то жёстко пошло не так...'
 					)
-				} else if (response.status === 402) {
+				} else if (response.status === 498) {
 					console.log('Изменились какие-то данные (шо за бред???)')
 				} else if (response.status === 400) {
 					console.log(

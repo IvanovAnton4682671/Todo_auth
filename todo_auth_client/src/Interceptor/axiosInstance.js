@@ -22,13 +22,13 @@ const axiosInstance = axios.create({
 	withCredentials: true,
 })
 
-//интерсептор для добавления токенов в заголовок запроса
+//интерсептор для запросов, добавляет токены в заголовок запроса
 axiosInstance.interceptors.request.use(
 	config => {
-		//добавление JWT-токена в заголовок, если он есть в localStorage
-		const jwtToken = localStorage.getItem('accessToken')
-		if (jwtToken) {
-			config.headers['Authorization'] = `Bearer ${jwtToken}`
+		//добавление JWTAccess-токена в заголовок, если он есть в localStorage
+		const jwtAccessToken = localStorage.getItem('accessToken')
+		if (jwtAccessToken) {
+			config.headers['Authorization'] = `Bearer ${jwtAccessToken}`
 		}
 
 		//добавление CSRF-токена в заголовок, если он есть в cookie
@@ -40,6 +40,51 @@ axiosInstance.interceptors.request.use(
 		return config
 	},
 	error => {
+		return Promise.reject(error)
+	}
+)
+
+//функция, которая обновляет JWTAccess-токен при истечении срока его действия
+const refreshJWTAccessToken = async () => {
+	try {
+		const jwtRefreshToken = localStorage.getItem('refreshToken')
+		const response = await axiosInstance.post('/get_refresh_token', {
+			refresh: jwtRefreshToken,
+		})
+
+		//сохранение новой пары токенов для дальнейшего использования
+		localStorage.setItem('accessToken', response.data.access)
+		localStorage.setItem('refreshToken', response.data.refresh)
+
+		return response.data.access
+	} catch (error) {
+		console.error('Ошибка при обновлении jwtAccessToken: ', error)
+		return null
+	}
+}
+
+//интерсептор для ответов, если ошибка 401 (проблема с авторизацией), то меняет JWTAccess-токен
+axiosInstance.interceptors.response.use(
+	response => {
+		return response
+	},
+	async error => {
+		const originalRequest = error.config
+		if (
+			error.response.status === 401 &&
+			!originalRequest._retry &&
+			error.response.data.message === 'token_not_valid'
+		) {
+			originalRequest._retry = true
+			const newJWTAccessToken = await refreshJWTAccessToken()
+			if (newJWTAccessToken) {
+				axios.defaults.headers.common[
+					'Authorization'
+				] = `Bearer ${newJWTAccessToken}`
+				originalRequest.headers['Authorization'] = `Bearer ${newJWTAccessToken}`
+				return axiosInstance(originalRequest)
+			}
+		}
 		return Promise.reject(error)
 	}
 )

@@ -6,8 +6,8 @@ import checkSvg from '../../img/check.svg'
 import penSvg from '../../img/pen.svg'
 import trashSvg from '../../img/trash.svg'
 
-function Area({ id, onDelete }) {
-	//состояние, которео следит за активностью textarea (если активна - разворачиваем, показываем дополнительные кнопки,
+function Area({ id, complete, areaText, onDelete, onUpdate }) {
+	//состояние, которое следит за активностью textarea (если активна - разворачиваем, показываем дополнительные кнопки,
 	//иначе - сворачиваем и скрываем)
 	const [isActive, setIsActive] = React.useState(false)
 	const onClickTextArea = () => {
@@ -15,15 +15,24 @@ function Area({ id, onDelete }) {
 	}
 
 	//состояние, которое следит за кнопкой check (ставит галочку или убирает)
-	const [isChecked, setIsChecked] = React.useState(false)
+	const [isChecked, setIsChecked] = React.useState(complete)
 	const onClickButtonCheck = () => {
-		setIsChecked(!isChecked)
+		const newCheckedState = !isChecked
+		setIsChecked(newCheckedState)
+		onUpdate(id, newCheckedState, text)
 	}
 
 	//состояние, которое следит за возможностью редактирования textarea (можно/нельзя)
 	const [isTouched, setIsTouched] = React.useState(false)
 	const onClickButtonPen = () => {
 		setIsTouched(!isTouched)
+	}
+
+	//состояние, которое хранит текст блока
+	const [text, setText] = React.useState(areaText)
+	const onChangeText = e => {
+		setText(e.target.value)
+		onUpdate(id, isChecked, e.target.value)
 	}
 
 	//а тут пополнение в нашем коллективе - useRef и useEffect, ещё и в связке
@@ -81,6 +90,8 @@ function Area({ id, onDelete }) {
 						}`}
 						onClick={onClickTextArea}
 						readOnly={true}
+						value={text}
+						onChange={onChangeText}
 					></textarea>
 				</div>
 			) : (
@@ -95,6 +106,8 @@ function Area({ id, onDelete }) {
 						onClick={onClickTextArea}
 						readOnly={!isTouched}
 						ref={textareaRef}
+						value={text}
+						onChange={onChangeText}
 					></textarea>
 					<div>
 						<button
