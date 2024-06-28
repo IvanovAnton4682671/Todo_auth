@@ -1,5 +1,5 @@
 import React from 'react'
-import axiosInstance from './Interceptor/axiosInstance'
+import { handleRequestLoadAreas } from './utils/API/api'
 
 import Authorization from './components/Authorization/Authorization'
 import Body from './components/Body/Body'
@@ -15,26 +15,7 @@ function App() {
 	const fetchUserToDoAreas = () => {
 		const userEmail = localStorage.getItem('userEmail')
 
-		axiosInstance
-			.post('/load_areas', { email: userEmail })
-			.then(response => {
-				console.log(
-					'Выполнен запрос на загрузку данных. Ответ сервера: ',
-					response.data
-				)
-
-				if (response.status === 200) {
-					console.log('To Do Areas пользователя были загружены!')
-					setUserToDoAreas(response.data.areas)
-				} else if (response.status === 400) {
-					console.log(
-						'Какого-то хрена отправился не POST-запрос при загрузке To Do Areas!'
-					)
-				}
-			})
-			.catch(error => {
-				console.log('Ошибка при отправке: ', userEmail, ' на сервер: ', error)
-			})
+		handleRequestLoadAreas(userEmail, setUserToDoAreas)
 	}
 
 	//эффект, который при установке аутентификации выполняет запрос на загрузку данных на сервер

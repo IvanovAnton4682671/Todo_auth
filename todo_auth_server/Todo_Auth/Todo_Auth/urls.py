@@ -39,7 +39,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('get_csrf_cookie', get_csrf_cookie, name='get_csrf_cookie'),
     #  path('get_jwt_token', TokenObtainPairView.as_view(), name='get_jwt_token'),
-    path('get_refresh_token', TokenRefreshView.as_view(), name='get_refresh_token'),
+    path('get_new_token_pair', TokenRefreshView.as_view(), name='get_new_token_pair'),
     path('authorization', handle_authorization, name='handle_authorization'),
     path('send_code', handle_send_code, name='handle_send_code'),
     path('input_code', handle_input_code, name='handle_input_code'),

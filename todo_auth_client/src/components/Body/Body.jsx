@@ -1,5 +1,5 @@
 import React from 'react'
-import axiosInstance from '../../Interceptor/axiosInstance'
+import { handleRequestSaveAreas } from '../../utils/API/api'
 
 import styles from './Body.module.css'
 import Area from '../Area/Area'
@@ -55,32 +55,7 @@ function Body({ userToDoAreas, onLogout }) {
 
 		const dataToSave = { email: userEmail, areas: areas }
 
-		axiosInstance
-			.post('/save_areas', dataToSave)
-			.then(response => {
-				console.log('Отправленные данные: ', dataToSave)
-				console.log('Ответ сервера: ', response.data)
-
-				if (response.status === 200) {
-					console.log('Данные были сохранены!')
-					alert('Данные были сохранены!')
-				} else if (response.status === 499) {
-					console.log(
-						'Данные пришли, но такого пользователя нет в бд! (а ты харош, раз смог такую ошибку получить)'
-					)
-				} else if (response.status === 498) {
-					console.log(
-						'Данные пришли без почты, т.е. пользователь не авторизован! (ваще красота, смог это сделать вопреки JWT-токенам)'
-					)
-				} else if (response.status === 400) {
-					console.log(
-						'Какого-то хрена отправился не POST-запрос при сохранении данных!'
-					)
-				}
-			})
-			.catch(error => {
-				console.log('Ошибка при отправке: ', dataToSave, ' на сервер: ', error)
-			})
+		handleRequestSaveAreas(dataToSave)
 	}
 
 	return (

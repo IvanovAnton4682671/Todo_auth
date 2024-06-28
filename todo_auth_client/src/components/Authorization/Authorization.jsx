@@ -1,19 +1,15 @@
 import React from 'react'
+import {
+	fetchCsrfToken,
+	handleRequestAuthorization,
+	handleRequestSendCode,
+	handleRequestRegistration,
+} from '../../utils/API/api'
 import { SHA256 } from 'crypto-js'
-import axiosInstance from '../../Interceptor/axiosInstance'
 
 import styles from './Authorization.module.css'
 
 function Authorization({ onLogin }) {
-	//функция, которая получает CSRF-токен и устанавливает его в cookie
-	const fetchCsrfToken = async () => {
-		try {
-			await axiosInstance.get('/get_csrf_cookie')
-		} catch (error) {
-			console.error('Ошибка при получении CSRF-токена: ', error)
-		}
-	}
-
 	//useEffect, которые отрабатывает сразу 1 раз при рендеринге компонента
 	React.useEffect(() => {
 		fetchCsrfToken()
@@ -74,43 +70,7 @@ function Authorization({ onLogin }) {
 					formAuthorizationData.authorizationPassword
 				).toString(),
 			}
-
-			axiosInstance
-				.post('/authorization', formDataWithHashedPassword)
-				.then(response => {
-					console.log('Отправленные данные: ', formDataWithHashedPassword)
-					console.log('Ответ сервера: ', response.data)
-
-					if (response.status === 200) {
-						console.log('Получилось авторизоваться!')
-						alert('Вы успешно авторизовались!')
-
-						//сохранение токенов и почты пользователя в localStorage
-						localStorage.setItem('accessToken', response.data.access)
-						localStorage.setItem('refreshToken', response.data.refresh)
-						localStorage.setItem(
-							'userEmail',
-							formDataWithHashedPassword.authorizationEmail
-						)
-
-						onLogin()
-					} else if (response.status === 201) {
-						console.log('Такой пользователь не существует!')
-						alert('Такой пользователь не существует!')
-					} else if (response.status === 400) {
-						console.log(
-							'Какого-то хрена отправился не POST-запрос при авторизации!'
-						)
-					}
-				})
-				.catch(error => {
-					console.log(
-						'Ошибка при отправке: ',
-						formDataWithHashedPassword,
-						' на сервер: ',
-						error
-					)
-				})
+			handleRequestAuthorization(formDataWithHashedPassword, onLogin)
 		} else {
 			alert(
 				'Некоторые поля заполнены неверно: ',
@@ -169,34 +129,7 @@ function Authorization({ onLogin }) {
 					formRegistrationData.registrationPassword
 				).toString(),
 			}
-
-			axiosInstance
-				.post('/send_code', formDataWithHashedPassword)
-				.then(response => {
-					console.log('Отправленные данные: ', formDataWithHashedPassword)
-					console.log('Ответ сервера: ', response.data)
-
-					if (response.status === 200) {
-						console.log('Получилось отправить код на почту!')
-						alert('Вам на почту был отправлен код подтверждения регистрации!')
-						setCodePassed(true)
-					} else if (response.status === 201) {
-						console.log('Пользователь с такими данными уже существует!')
-						alert('Пользователь с такими данными уже существует!')
-					} else if (response.status === 400) {
-						console.log(
-							'Какого-то хрена отправился не POST-запрос при отправке кода на почту!'
-						)
-					}
-				})
-				.catch(error => {
-					console.log(
-						'Ошибка при отправке: ',
-						formDataWithHashedPassword,
-						' на сервер: ',
-						error
-					)
-				})
+			handleRequestSendCode(formDataWithHashedPassword, setCodePassed)
 		} else {
 			alert(
 				'Некоторые поля заполнены неверно: ',
@@ -216,47 +149,7 @@ function Authorization({ onLogin }) {
 				formRegistrationData.registrationPassword
 			).toString(),
 		}
-
-		axiosInstance
-			.post('/input_code', formDataWithHashedPassword)
-			.then(response => {
-				console.log('Отправленные данные: ', formDataWithHashedPassword)
-				console.log('Ответ сервера: ', response.data)
-
-				if (response.status === 200) {
-					console.log(
-						'Код введён верно и никакие данные не изменились, успешная регистрация!'
-					)
-					alert('Вы успешно зарегистрировались!')
-
-					//сохранение токенов в localStorage
-					localStorage.setItem('accessToken', response.data.access)
-					localStorage.setItem('refreshToken', response.data.refresh)
-
-					onLogin()
-				} else if (response.status === 201) {
-					console.log('Код введён неверно!')
-					alert('Вы ввели неверный код!')
-				} else if (response.status === 499) {
-					console.log(
-						'Глобальный код отсутствует, что-то жёстко пошло не так...'
-					)
-				} else if (response.status === 498) {
-					console.log('Изменились какие-то данные (шо за бред???)')
-				} else if (response.status === 400) {
-					console.log(
-						'Какого-то хрена отправился не POST-запрос при проверке кода!'
-					)
-				}
-			})
-			.catch(error => {
-				console.log(
-					'Ошибка при отправке: ',
-					formDataWithHashedPassword,
-					' на сервер: ',
-					error
-				)
-			})
+		handleRequestRegistration(formDataWithHashedPassword, onLogin)
 	}
 
 	return (
